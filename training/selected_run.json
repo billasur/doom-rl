@@ -1,0 +1,14 @@
+{
+  "resumed_from": "r2b08_3expert",
+  "rid": "extra_13",
+  "seed": 74113,
+  "keycard_share": 0.3,
+  "anchor_weight": 2.0,
+  "aux_floor": 0.48,
+  "aux_weight": 0.75,
+  "lock_reward": 23,
+  "learning_rate": 8.5e-05,
+  "workers": 8,
+  "weights_version": 4,
+  "global_step": 43136
+}

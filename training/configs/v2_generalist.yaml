@@ -1,0 +1,17 @@
+categorical: true
+depth: true
+reward_mode: v2_generalist
+monster_density: 0.35
+seed: 42001
+workers: 32
+rollout_steps: 256
+sequence_steps: 32
+minibatch_sequences: 16
+epochs: 2
+learning_rate: 0.0003
+gamma: 0.995
+gae_lambda: 0.95
+clip_range: 0.2
+checkpoint_every_seconds: 120
+stages:
+  - {start: 0.0, weights: [1, 1, 1, 1]}
