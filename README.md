@@ -24,7 +24,7 @@ With Docker and access to the organizers' image, run the template's sandbox chec
 uv run python validate.py --docker
 ```
 
-Without the published image, build it from this repository first with `docker build -t devforge-doom .`. Our sandbox check passed on CPU with the agent pinned to one core (x86 image emulated on Apple silicon): p50 5.9 ms, p99 12.5 ms, peak RAM 1,116 MB.
+If the published image is unavailable, build it in a separate checkout of the [official starter template](https://github.com/Reinforce-SST/devforge-doom-template) with `docker build -t devforge-doom .`. Then validate this submission with `uv run python validate.py --docker --image devforge-doom`. A prior CPU sandbox check on Apple silicon with an emulated x86 image measured 5.9 ms p50, 12.5 ms p99, and 1,116 MB peak RAM.
 
 The default dry run uses `maps/two_rooms.wad`. For extra checks, pass one `--map path/to/test.wad:MAP01` per map. The dry run checks compatibility and latency. The organizers rank agents on their unseen suite.
 
