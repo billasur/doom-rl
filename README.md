@@ -1,76 +1,50 @@
-# Can It Play DOOM?
+# Extra 13 · Can It Play DOOM?
 
 DevForge Track 1 submission by Sanskar Kharya, Prudhvi Raj, and Prahlad.
 
-Extra 13 is a learned router over three frozen recurrent policies for real-map exploration, keycards, and combat. It uses official telemetry and an egocentric spatial grid.
+Extra 13 learns when to use three frozen recurrent specialists for real-map exploration, keycards, and combat. Each expert maintains its own GRU state and 16×16 egocentric grid. All three update on every decision so the router can switch experts without losing their history. The submitted policy uses official telemetry and an 8×32 pooled depth strip.
 
-- [Two-page project brief](brief.pdf)
-- [Evaluation entry point](submission/agent.py) and [Git LFS weights](submission/v2_weights.pt)
-- [Training pipeline and selected run](training/SELECTED_RUN.md)
+[Project brief](brief.pdf) · [Agent](submission/agent.py) · [Git LFS weights](submission/v2_weights.pt) · [Training recipe](training/SELECTED_RUN.md)
 
-## Validate locally
+## Validate the submission
 
-Use Python 3.13. Install Git LFS before fetching the weights.
+These commands require Git LFS, uv, and Python 3.13.
 
 ```bash
 git lfs pull
-uv sync
-uv run python validate.py
+git lfs ls-files
+uv run --with 'torch==2.15.0' python validate.py --device cpu
 ```
 
-The organizers provide the evaluation image. With Docker and access to that image, run `uv run python validate.py --docker`.
+The starter's local environment excludes PyTorch. The validation command adds the version used by the official image. The evaluator supplies PyTorch, so `submission/requirements.txt` adds no packages.
+
+With Docker and access to the organizers' image, run the template's sandbox check. On a CPU-only Docker host, append `--no-gpu`.
+
+```bash
+uv run python validate.py --docker
+```
+
+The default dry run uses `maps/two_rooms.wad`. For extra checks, pass one `--map path/to/test.wad:MAP01` per map. The dry run checks compatibility and latency. The organizers rank agents on their unseen suite.
+
+## How the agent works
+
+- **Inference.** `DoomAgent` loads the packaged checkpoint once. `reset()` clears the specialists' memory, router state, and previous action. `act()` samples one specialist through a learned categorical router, masks consecutive USE presses, and returns nine binary button values every four game ticks.
+- **Training.** Our recurrent PPO pipeline uses non-evaluation Freedoom2, OBSIDIAN, and procedural maps. It includes reverse keycard drills, exploration rewards, and combat curricula. Extra 13 freezes R2_08, B08, and L4 student 2 and trains the router with keycard supervision and a KL penalty against the parent router outside keycard contexts.
+- **Scorer compatibility.** Inference lives under `submission/` and uses only the supplied observations and packaged weights. The evaluated episode needs no network or repository writes. The organizers use their frozen wrapper and base image.
+
+## Validation and results
+
+The public release was tested from a fresh clone with a real Git LFS download. The validator reported **5.9 MB** including weights. A separate Daytona Linux dry run pinned the agent to one CPU and reported **4.3 ms p99** and **270 MB peak resident RAM**. Timing depends on hardware and map. The scorer limits agent compute **per map**, based on the tick cap.
+
+On the team's 37-map proxy suite, Extra 13 scored **2,080.87** versus **1,993.36** for its parent on 10 matched repeats. It recorded **13/30** ordered Tier 3 unlocks on that panel. Across the three confirmation panels (20 repeats total), it gained four ordered Tier 3 unlocks and one Tier 4 exit while giving up four Tier 2 exits. The exact released package scored **1,849.57** versus **1,804.29** in a separate five-repeat check. [Panel details and tradeoffs](brief.pdf)
 
 ## Repository layout
 
-```
-env/                  official ViZDoom Gymnasium wrapper (doom_env): spaces, sensors, protocol, limits
-maps/                 one small test map (NOT an evaluation map); bring your own for training
-submission/agent.py   your DoomAgent: the evaluation entry point
-submission/v2_weights.pt  model weights (Git LFS)
-training/             policy and routing training pipeline
-brief.pdf             two-page project brief
-validate.py           run before submitting
-tests/                tests for the wrapper and validator (uv run pytest)
-docs/                 contract, rules, submission guide, evaluation details
-```
-
-## Using the environment
-
-```python
-from doom_env import make_env
-
-env = make_env("maps/two_rooms.wad")     # test map; use your own maps for training
-obs, info = env.reset(seed=0)
-obs, reward, terminated, truncated, info = env.step(env.action_space.sample())
-```
-
-Observations are a dict of `rgb`, `depth`, `vitals`, `rays` and `visible_entities`, all
-ego-centric and partially observable. See [docs/CONTRACT.md](docs/CONTRACT.md).
-The wrapper's `reward` is a basic default for convenience. Shape your own reward for training.
-
-**Compute tip:** training only on raw pixels is expensive. The `rays`, `visible_entities` and
-`vitals` signals run thousands of steps per second on a CPU. Hybrid pixel + spatial models are welcome.
-
-## Hardware at evaluation
-
-One NVIDIA **RTX 3090 (24 GB)** shared between evaluation workers. Each agent gets **2 GB VRAM,
-8 GB RAM and 1 CPU thread**, so keep models compact and inference fast
-(see [hardware](docs/EVALUATION.md#hardware) and [timeouts](docs/EVALUATION.md#timeouts)).
-`validate.py` runs your agent under the same CPU/RAM limits and reports GPU memory.
-
-## Documentation
-
-| Doc | What's inside |
+| Path | Purpose |
 | --- | --- |
-| [docs/CONTRACT.md](docs/CONTRACT.md) | Observation/action spaces and the `DoomAgent` interface |
-| [docs/RULES.md](docs/RULES.md) | Ground rules: what's allowed, what gets you disqualified |
-| [docs/SUBMISSION.md](docs/SUBMISSION.md) | Submission checklist, Git LFS, 1 GB limit, `requirements.txt` |
-| [docs/EVALUATION.md](docs/EVALUATION.md) | Map tiers, scoring categories, timeouts, replays |
-
-## Rules in one minute
-
-- Actions must come from **trained neural parameters**: no rule trees, no `A*`/Dijkstra, no `atan2` aimbots,
-  no unmodified off-the-shelf SB3.
-- Change anything you want **during training**. Evaluation uses the **vanilla engine**, the
-  official wrapper and **unseen maps**.
-- Create the repo during the hackathon. Libraries are fine; the core architecture and training must be yours.
+| `submission/` | Self-contained inference code and trained weights |
+| `training/` | Learner, reward shaping, map generation, and selected-run settings |
+| `brief.pdf` | Two-page architecture and results brief |
+| `env/`, `validate.py` | Official template wrapper and validator |
+| `maps/two_rooms.wad` | Public verification map |
+| `docs/` | Organizer [contract](docs/CONTRACT.md), [evaluation](docs/EVALUATION.md), [rules](docs/RULES.md), and [submission guide](docs/SUBMISSION.md) |
