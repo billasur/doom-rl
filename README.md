@@ -30,7 +30,7 @@ The default dry run uses `maps/two_rooms.wad`. For extra checks, pass one `--map
 
 ## How the agent works
 
-- **Inference.** `DoomAgent` loads the packaged checkpoint once. `reset()` clears the specialists' memory, router state, and previous action. `act()` samples one specialist through a learned categorical router, masks consecutive USE presses, and returns nine binary button values every four game ticks.
+- **Inference.** `DoomAgent` loads the packaged checkpoint once. It runs on one CPU thread even when the runner requests CUDA. `reset()` clears the specialists' memory, router state, and previous action. `act()` samples one specialist through a learned categorical router, masks consecutive USE presses, and returns nine binary button values every four game ticks.
 - **Training.** Our recurrent PPO pipeline uses non-evaluation Freedoom2, OBSIDIAN, and procedural maps. It includes reverse keycard drills, exploration rewards, and combat curricula. Extra 13 freezes R2_08, B08, and L4 student 2 and trains the router with keycard supervision and a KL penalty against the parent router outside keycard contexts.
 - **Scorer compatibility.** Inference lives under `submission/` and uses only the supplied observations and packaged weights. The evaluated episode needs no network or repository writes. The organizers use their frozen wrapper and base image.
 

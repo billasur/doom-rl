@@ -19,7 +19,9 @@ V1_WEIGHTS_PATH = V2_WEIGHTS_PATH
 
 class DoomAgent:
     def __init__(self, observation_space, action_space, device):
-        self.device = torch.device(device)
+        requested_device = torch.device(device)
+        # This compact policy meets the scorer budget on one CPU and needs no CUDA context.
+        self.device = torch.device("cpu") if requested_device.type == "cuda" else requested_device
         self.spaces = (observation_space, action_space)
         self.depth = True
         self.spatial = self.categorical = True
