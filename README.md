@@ -24,6 +24,8 @@ With Docker and access to the organizers' image, run the template's sandbox chec
 uv run python validate.py --docker
 ```
 
+Without the published image, build it from this repository first with `docker build -t devforge-doom .`. Our sandbox check passed on CPU with the agent pinned to one core (x86 image emulated on Apple silicon): p50 5.9 ms, p99 12.5 ms, peak RAM 1,116 MB.
+
 The default dry run uses `maps/two_rooms.wad`. For extra checks, pass one `--map path/to/test.wad:MAP01` per map. The dry run checks compatibility and latency. The organizers rank agents on their unseen suite.
 
 ## How the agent works
@@ -43,7 +45,7 @@ On the team's 37-map proxy suite, Extra 13 scored **2,080.87** versus **1,993.36
 | Path | Purpose |
 | --- | --- |
 | `submission/` | Self-contained inference code and trained weights |
-| `training/` | Learner, reward shaping, map generation, and selected-run settings |
+| `training/` | Learner, reward shaping, map generation, and selected-run settings ([guide](training/README.md), [dependencies](training/requirements.txt)) |
 | `brief.pdf` | Two-page architecture and results brief |
 | `env/`, `validate.py` | Official template wrapper and validator |
 | `maps/two_rooms.wad` | Public verification map |

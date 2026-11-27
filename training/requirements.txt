@@ -1,0 +1,9 @@
+# Training and evaluation dependencies. Versions match docker/requirements.lock,
+# so the official image already provides all of them.
+torch==2.15.0
+numpy==2.5.5
+gymnasium==1.4.0
+vizdoom==1.3.3
+pillow==13.0.0
+pyyaml==6.0.4
+# doom_env is installed from env/ by `uv sync`.

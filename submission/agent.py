@@ -1,6 +1,7 @@
 """Finalist's standalone inference entry point."""
 from pathlib import Path
 
+import numpy as np
 import torch
 
 from submission.cross_team_models.commute_moe import TEMPERATURE_KEY
@@ -43,7 +44,12 @@ class DoomAgent:
     @torch.inference_mode()
     def act(self, observation):
         base = pack_policy(observation, self.history, True)
-        packed = torch.from_numpy(add_pixels(base, self.previous, observation["rgb"])).to(self.device)[None]
+        if self.model.rgb_expert:
+            packed = add_pixels(base, self.previous, observation["rgb"])
+        else:
+            # The released router has no RGB expert, so skip packing the frame.
+            packed = np.concatenate((base, [self.previous]), dtype=np.float32)
+        packed = torch.from_numpy(packed).to(self.device)[None]
         experts, self.state = self.model.expert_log_probabilities(packed, self.state)
         routes, _, self.context = self.model.gate_outputs(packed, self.context)
         if self.model.mode == "hard":
